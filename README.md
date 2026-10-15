@@ -1,61 +1,72 @@
 # Customer Dashboard
 
-SvelteKit 2 + Svelte 5 (runes) + TypeScript. Lists customers from a REST API, with status filter, search, responsive layout and a detail modal.
+SvelteKit 2 + Svelte 5 (runes) + TypeScript. Muestra una lista de clientes obtenida desde una API REST, con filtro por estado, búsqueda, diseño responsive y un modal de detalle.
 
-## Requirements
+## Requisitos
 
 - Node.js >= 20
 - npm
 
-## Run
+## Ejecutar
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
 ```
 
-Other scripts:
+Otros scripts:
 
 ```bash
-npm test           # unit tests (Vitest)
-npm run check      # type check (svelte-check)
-npm run build      # production build
+npm test           # pruebas unitarias (Vitest)
+npm run check      # verificación de tipos (svelte-check)
+npm run build      # build de producción
 ```
 
-## Mock API
+## API mock
 
-Internal SvelteKit endpoint: `GET /api/customers` (700 ms simulated latency).
+Endpoint interno de SvelteKit: `GET /api/customers` (latencia simulada de 700 ms).
 
-To try the non-happy paths, add a query string to the page URL:
+Para probar los casos no felices, agrega un parámetro a la URL de la página:
 
-- `/?fail=1`: API returns 500 -> error state with "Reintentar".
-- `/?empty=1`: API returns `[]` -> empty state.
+- `/?fail=1`: la API responde 500 y se muestra el estado de error con el botón "Reintentar".
+- `/?empty=1`: la API responde `[]` y se muestra el estado de lista vacía.
 
-## Structure
+## Funcionalidades
+
+- Lista de clientes (nombre, email, estado, fecha de registro).
+- Filtro por estado: Todos, Activos, Pendientes, Bloqueados.
+- Búsqueda por nombre o email (ignora mayúsculas y tildes).
+- Componente reutilizable `StatusBadge`.
+- Estados de loading, error de API y lista vacía.
+- Responsive: tabla en desktop, tabla con menos columnas en tablet, tarjetas en mobile.
+- Botón "Ver detalle" que abre un modal con los datos del cliente.
+
+## Estructura
 
 ```
 src/
   routes/
-    +page.svelte              page composition only
-    api/customers/+server.ts  mock REST endpoint
+    +page.svelte              composición de la página
+    api/customers/+server.ts  endpoint REST mock
   lib/
     features/customers/
-      domain/      types, pure filter logic, repository interface
-      data/        HTTP repository implementation
-      state/       rune-based store
-      components/  StatusBadge, SearchInput, StatusFilter, CustomerTable, CustomerCardList, CustomerList, CustomerDetailModal
-    shared/        generic UI states (Loading/Error/Empty), formatters
-    server/        mock data
-    styles/        design tokens + global CSS
+      domain/      tipos, lógica pura de filtrado, interfaz del repositorio
+      data/        implementación HTTP del repositorio
+      state/       store reactivo con runes
+      components/  StatusBadge, SearchInput, StatusFilter, CustomerTable,
+                   CustomerCardList, CustomerList, CustomerDetailModal
+    shared/        estados genéricos (Loading/Error/Empty) y formateadores
+    server/        datos mock
+    styles/        variables de diseño y CSS global
 ```
 
-## Technical decisions
+## Decisiones técnicas
 
-- **Feature-based + layered**: domain (pure TS) / data / state / UI. Dependencies point inward.
-- **SOLID**: filtering, fetching, state and rendering are separate units. The store depends on a `CustomerRepository` interface (DIP), so tests inject fakes and the REST source can be swapped without touching UI.
-- **Runes store (class)**: `$state` + `$derived` keep filter results always in sync with no manual effects.
-- **Responsive**: table on desktop, fewer columns on tablet, cards on mobile (same data, CSS breakpoint).
-- **Native `<dialog>`** for the detail view: focus trap, Esc and inert background for free.
-- **Plain scoped CSS + tokens**: no extra dependency; Tailwind not needed at this size.
-- **Accessibility**: labelled inputs, radio group filter, `role=status/alert`, reduced-motion support.
-- **Pinned to SvelteKit 2** to stay compatible with Node 20/22.
+- **Arquitectura por feature y capas**: dominio (TypeScript puro), datos, estado y UI. Las dependencias apuntan hacia el dominio.
+- **SOLID**: filtrado, acceso a datos, estado y presentación están separados. El store depende de la interfaz `CustomerRepository` (inversión de dependencias), por lo que los tests usan repositorios falsos y se puede cambiar la fuente de datos sin tocar la UI.
+- **Store con runes (clase)**: `$state` y `$derived` mantienen la lista filtrada siempre sincronizada, sin efectos manuales.
+- **Responsive con CSS**: los mismos datos se presentan como tabla o tarjetas según el breakpoint.
+- **`<dialog>` nativo** para el detalle: foco atrapado, cierre con Esc y fondo inerte sin librerías.
+- **CSS plano con variables**: sin dependencias adicionales; Tailwind no es necesario para este tamaño.
+- **Accesibilidad**: inputs con etiqueta, filtro como grupo de radios, `role="status"` y `role="alert"`, soporte de `prefers-reduced-motion`.
+- **SvelteKit 2 fijado** para mantener compatibilidad con Node 20/22.
